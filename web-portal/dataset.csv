@@ -1,0 +1,51 @@
+Grievance_Description,Department,Priority
+"Help! Two men are following a girl near the bus station, she looks terrified.",Police,Immediate
+"There is a huge fire in the chemical factory on 4th Street!",Fire,Immediate
+"I have been robbed at gunpoint in the main market area.",Police,Immediate
+"An electric pole has fallen on the road and live wires are sparking.",Electricity,Immediate
+"A pregnant woman is in critical labor and needs an ambulance immediately.",Medical,Immediate
+"Large snake entered my house, my children are trapped in the bedroom.",Forest,Immediate
+"My neighbor is beating his wife severely right now, please send help.",Police,Immediate
+"Gas cylinder exploded in the apartment above mine.",Fire,Immediate
+"There is a severe head-on collision on the highway, multiple injuries.",Medical,Immediate
+"Someone is trying to break into my house through the back window.",Police,Immediate
+"Power has been out in our entire sector for 24 hours.",Electricity,High
+"Sewer line burst and sewage is entering our home.",Municipal,High
+"Traffic signals at the main junction are malfunctioning causing accidents.",Traffic,High
+"Water supply pipe broke, thousands of gallons wasting on the road.",Water Board,High
+"Street lights are not working in a high-crime area.",Electricity,High
+"Dead animal carcass rotting on the road causing health hazard.",Municipal,High
+"ATM machine swallowed my card and debited money without dispensing cash.",Banking,High
+"Live wire hanging dangerously low near the school entrance.",Electricity,High
+"Shortage of oxygen cylinders in the district hospital emergency ward.",Medical,High
+"Tree branch about to fall on the power lines.",Forest,High
+"Garbage truck has not visited our colony for 5 days.",Municipal,Medium
+"There are too many potholes on the road leading to the market.",Transport,Medium
+"My birth certificate application has been pending for 2 weeks.",Municipal,Medium
+"Stray dogs are becoming aggressive in the park.",Municipal,Medium
+"Need to renew my driving license, online portal is glitching.",Transport,Medium
+"Illegal parking is blocking the entrance to our lane.",Traffic,Medium
+"Water pressure is very low in our area during mornings.",Water Board,Medium
+"Mosquito fogging has not been done in our area for a month.",Medical,Medium
+"Public toilet in the market is unclean and has no water.",Municipal,Medium
+"Pension amount has not been credited to my account this month.",Treasury,Medium
+"Request to plant more trees in the new community park.",Forest,Low
+"The paint on the zebra crossing has faded.",Traffic,Low
+"Suggestion to install solar panels on the government office roof.",Electricity,Low
+"Library books are very old and need updating.",Education,Low
+"Request for a new bench at the bus stop.",Transport,Low
+"Noise from the nearby construction site during the day.",Pollution Control,Low
+"Neighbor's fence is encroaching slightly onto the sidewalk.",Municipal,Low
+"Request to rename the street after a freedom fighter.",Municipal,Low
+"Park grass needs trimming.",Municipal,Low
+"Signboard spelling is incorrect on Main Street.",Transport,Low
+"Complaint about the behavior of the clerk at the inquiry counter.",Admin,Low
+"Request for a new walking track in the city garden.",Municipal,Low
+"Street dogs are barking at night.",Municipal,Low
+"Dustbins in the park are broken.",Municipal,Low
+"Request to increase the frequency of the 5 PM bus.",Transport,Low
+"Playground swing is making a squeaking noise.",Municipal,Low
+"Water tastes slightly chlorine-heavy.",Water Board,Low
+"Request for a yoga instructor at the community center.",Sports,Low
+"Suggestion to host a cleanliness drive next month.",Municipal,Low
+"Street name plate is rusted.",Municipal,Low

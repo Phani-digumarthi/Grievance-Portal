@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/admin/dashboard/page.jsx", "app/admin/login/page.jsx", "app/citizen/lodge/page.jsx", "app/citizen/history/page.jsx", "app/login/page.jsx", "app/layout.jsx", "components/GrievanceMap.jsx", "app/page.jsx"  ],
   "exclude": ["node_modules"]
 }

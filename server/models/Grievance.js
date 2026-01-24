@@ -2,6 +2,13 @@ const mongoose = require('mongoose');
 
 const GrievanceSchema = new mongoose.Schema({
   citizenName: String,
+  
+  // 🚀 NEW: Links the grievance to a specific user account
+  userEmail: {
+    type: String,
+    required: true
+  },
+
   description: {
     type: String,
     required: false,
@@ -35,6 +42,17 @@ const GrievanceSchema = new mongoose.Schema({
   explanation: {
     type: String,
   },
+  
+  // 🚀 NEW: Fields for Admin Updates
+  adminReply: {
+    type: String,
+    default: null
+  },
+  estimatedTime: {
+    type: String,
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,
