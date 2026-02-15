@@ -4,74 +4,100 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const jwt = require("jsonwebtoken"); 
+require('dotenv').config();
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
 
 const app = express();
-const Grievance = require('./models/Grievance');
-const User = require('./models/User'); // <--- IMPORT USER MODEL
+const PORT = process.env.PORT || 5000;
 
+// --- Models ---
+const Grievance = require('./models/Grievance');
+const User = require('./models/User');
+
+// --- Middleware ---
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// ... (Keep your existing multer/upload configuration here) ...
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+// 2. Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, // Put these in .env file
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
+// 3. Set up Cloudinary Storage Engine
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'civic_connect_uploads', // Folder name in Cloudinary dashboard
+        allowed_formats: ['jpg', 'png', 'jpeg', 'wav', 'mp3'], // Allowed file types
+        resource_type: 'auto' // Auto-detect image vs audio
+    },
+});
+
 const upload = multer({ storage: storage });
 
-// Connect to MongoDB
-mongoose.connect('mongodb+srv://grievanceanalysis:Phani1234@atlascloud.58bqyub.mongodb.net/grievance_platform?appName=AtlasCloud')
-    .then(() => console.log('✅ MongoDB Connected to Atlas Cloud'))
+// --- MongoDB Connection ---
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/civic_connect_db')
+    .then(() => console.log('✅ MongoDB Connected'))
     .catch(err => console.log('❌ DB Connection Error:', err));
 
-// ==========================================
-// 🚀 NEW: AUTHENTICATION ROUTES
-// ==========================================
+//  ADMIN SECURITY (Still Active)
 
-// 1. Citizen Registration (Sign Up)
+const verifyAdmin = (req, res, next) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(403).json({ message: "No token provided" });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
+        if (decoded.role !== 'admin') {
+            return res.status(403).json({ message: "Access Denied: Admins only" });
+        }
+        req.admin = decoded;
+        next();
+    } catch (err) {
+        res.status(401).json({ message: "Invalid Token" });
+    }
+};
+
+// AUTH ROUTES
+
+// 1. Citizen Sign Up (Still used to create account for Name/Email)
 app.post('/api/auth/signup', async (req, res) => {
     try {
         const { name, email, password, pincode } = req.body;
-
-        // Check if user already exists
         const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: "⚠️ Email already exists." });
-        }
+        if (existingUser) return res.status(400).json({ success: false, message: "Email already exists." });
 
-        const newUser = new User({ name, email, password, pincode });
+        const newUser = new User({ name, email, password, pincode, role: 'citizen' });
         await newUser.save();
 
-        res.json({ success: true, message: "✅ Account created successfully!" });
+        res.json({ success: true, message: "Account created successfully!" });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// 2. Citizen Login
-app.post('/api/auth/login', async (req, res) => {
+// 2. Citizen Login (Used only to retrieve Name/Email for localStorage)
+app.post('/api/auth/login', async (req, res) => { 
     try {
         const { email, password } = req.body;
-
-        // Find user by email
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ success: false, message: "❌ Account not found." });
+        
+        if (!user || user.password !== password) {
+            return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        // Check password (simple check)
-        if (user.password !== password) {
-            return res.status(401).json({ success: false, message: "❌ Incorrect Password." });
-        }
+        // We still send a token just in case, but frontend won't force it
+        const token = jwt.sign({ id: user._id, role: "citizen" }, process.env.JWT_SECRET || "secret", { expiresIn: "1h" });
 
-        // Success: Send back user info (excluding password)
         res.json({ 
             success: true, 
+            token: token,
             user: { name: user.name, email: user.email, pincode: user.pincode } 
         });
 
@@ -80,22 +106,33 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// 3. Admin Login (STRICT)
+app.post('/api/admin/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const admin = await User.findOne({ email, role: 'admin' });
+        
+        if (!admin || admin.password !== password) {
+            return res.status(401).json({ success: false, message: "Invalid Admin Credentials" });
+        }
 
-// ==========================================
-// END NEW ROUTES
-// ==========================================
+        const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET || "secret", { expiresIn: "1h" });
+        res.json({ success: true, token });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
-// ... (Keep your existing Grievance Routes: GET /api/grievances, POST /api/grievances/submit, etc.) ...
+// GRIEVANCE ROUTES (Open for Citizens)
 
+// GET: Fetch Grievances (Open Access - Filtered by Email)
 app.get('/api/grievances', async (req, res) => {
     try {
-        const { email } = req.query; // Check if email is passed in URL
+        const { email } = req.query; 
         let query = {};
         
-        // If email is provided, only fetch grievances for that email
-        if (email) {
-            query.userEmail = email;
-        }
+        // If email provided, show user history. If not (and not admin), show nothing or public feed.
+        if (email) query.userEmail = email;
 
         const grievances = await Grievance.find(query).sort({ createdAt: -1 });
         res.json({ success: true, data: grievances });
@@ -104,21 +141,22 @@ app.get('/api/grievances', async (req, res) => {
     }
 });
 
+// POST: Submit Grievance (Updated for Cloudinary)
 app.post('/api/grievances/submit', upload.fields([{ name: 'image' }, { name: 'audio' }]), async (req, res) => {
     try {
-        // ... (existing file logic) ...
-        let imagePath = req.files['image'] ? req.files['image'][0].path : null;
-        let audioPath = req.files['audio'] ? req.files['audio'][0].path : null;
+        // Cloudinary returns the URL in `req.files[...][0].path`
+        let imageUrl = req.files['image'] ? req.files['image'][0].path : null;
+        let audioUrl = req.files['audio'] ? req.files['audio'][0].path : null;
 
         const newGrievance = new Grievance({
             citizenName: req.body.citizenName,
-            userEmail: req.body.userEmail, // <--- SAVE THE EMAIL
+            userEmail: req.body.userEmail, 
             area: req.body.area,
             category: 'General',
             priority: 'Medium',
             description: req.body.description,
-            imageUrl: imagePath,
-            audioUrl: audioPath,
+            imageUrl: imageUrl, // Saves the Cloudinary URL (starts with https://)
+            audioUrl: audioUrl,
             status: 'Pending'
         });
 
@@ -129,11 +167,10 @@ app.post('/api/grievances/submit', upload.fields([{ name: 'image' }, { name: 'au
     }
 });
 
-// UPDATE: Mark Grievance as Resolved
-app.put('/api/grievances/:id', async (req, res) => {
-    console.log(`🔹 Request to update ID: ${req.params.id}`);
-    console.log("🔹 Data received:", req.body);
+// 🛡️ ADMIN ACTIONS (Protected)
 
+// PUT: Resolve Grievance (ADMIN ONLY)
+app.put('/api/grievances/:id', verifyAdmin, async (req, res) => { 
     try {
         const { status, adminReply, estimatedTime } = req.body;
 
@@ -141,25 +178,30 @@ app.put('/api/grievances/:id', async (req, res) => {
             req.params.id, 
             { 
                 status: status,
-                adminReply: adminReply || "Issue resolved by administration.", // Default message
+                adminReply: adminReply || "Issue resolved by administration.",
                 estimatedTime: estimatedTime || "Completed"
             },
-            { new: true } // Return the updated document
+            { new: true }
         );
 
-        if (!updatedGrievance) {
-            console.log("❌ Grievance not found with that ID");
-            return res.status(404).json({ success: false, error: "Grievance not found" });
-        }
+        if (!updatedGrievance) return res.status(404).json({ success: false, error: "Grievance not found" });
 
-        console.log("✅ Update Successful!");
         res.json({ success: true, data: updatedGrievance });
-
     } catch (err) {
-        console.error("❌ Database Update Error:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+// DELETE: Delete Grievance (ADMIN ONLY)
+app.delete('/api/grievances/:id', verifyAdmin, async (req, res) => { 
+    try {
+        const deletedGrievance = await Grievance.findByIdAndDelete(req.params.id);
+        if (!deletedGrievance) return res.status(404).json({ success: false, message: "Grievance not found" });
+
+        res.json({ success: true, message: "Grievance deleted", data: deletedGrievance });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
