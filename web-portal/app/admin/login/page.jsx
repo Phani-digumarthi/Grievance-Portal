@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, ArrowRight, Loader2 } from "lucide-react";
@@ -18,7 +17,7 @@ export default function AdminLogin() {
 
     setTimeout(() => {
         if (email === "admin@kakinada.gov.in" && password === "admin123") {
-            localStorage.setItem("admin_token", "valid");
+            localStorage.setItem("adminToken", "valid");
             router.push("/admin/dashboard");
         } else {
             setError("Invalid Official Credentials");

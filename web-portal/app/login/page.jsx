@@ -13,7 +13,7 @@ const VALID_PINCODES = [
 export default function CitizenLogin() {
   const router = useRouter();
   
-  const [view, setView] = useState('login');
+  const [view, setView] = useState('login'); // 'login' or 'signup'
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -23,42 +23,50 @@ export default function CitizenLogin() {
   const [password, setPassword] = useState("");
   const [pincode, setPincode] = useState(""); 
 
+  // Clear inputs when switching views
   useEffect(() => { 
       setMessage(""); 
       if(view === 'login') { setName(""); setPincode(""); }
   }, [view]);
 
-  // 🚀 UPDATED: Login via Backend API
+  // 🚀 LOGIN LOGIC
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-        const res = await fetch('http://localhost:5000/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-        const data = await res.json();
+      const data = await res.json();
 
-        if (data.success) {
-            // Save user session for the frontend to use
-            localStorage.setItem("citizen_user", JSON.stringify(data.user));
-            router.push("/citizen/lodge");
-        } else {
-            setMessage(data.message || "❌ Login Failed");
+      if (data.success) {
+        // 1. Store User Details (Vital for Lodge Page)
+        localStorage.setItem("citizen_user", JSON.stringify(data.user));
+        
+        // 2. Store Token (Optional: logic works even if backend stops sending it)
+        if (data.token) {
+            localStorage.setItem("citizenToken", data.token);
         }
+
+        // 3. Redirect
+        router.push("/citizen/lodge");
+      } else {
+        setMessage(data.message || "❌ Login Failed");
+      }
     } catch (err) {
-        console.error("Login Error:", err);
-        setMessage("❌ Server Error. Please check your connection.");
+      console.error("Login Error:", err);
+      setMessage("❌ Server Error. Please check your connection.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
-  // 🚀 UPDATED: Sign Up via Backend API
+  // 🚀 SIGNUP LOGIC
   const handleSignUp = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -102,6 +110,7 @@ export default function CitizenLogin() {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <div className="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden border border-slate-200">
         
+        {/* Header Section */}
         <div className="bg-blue-700 p-8 text-center text-white">
             <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/20">
                 <ShieldCheck size={32} />
@@ -113,14 +122,21 @@ export default function CitizenLogin() {
             <p className="text-blue-100 text-sm mt-1">Kakinada Grievance Portal</p>
         </div>
 
+        {/* Form Section */}
         <div className="p-8">
             
+            {/* Alert Message */}
             {message && (
-                <div className={`mb-6 p-3 rounded-lg text-sm font-bold text-center ${message.startsWith('❌') ? 'bg-red-100 text-red-800 border border-red-200' : message.startsWith('⚠️') ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : 'bg-green-100 text-green-800 border border-green-200'}`}>
+                <div className={`mb-6 p-3 rounded-lg text-sm font-bold text-center ${
+                    message.startsWith('❌') ? 'bg-red-100 text-red-800 border border-red-200' : 
+                    message.startsWith('⚠️') ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : 
+                    'bg-green-100 text-green-800 border border-green-200'
+                }`}>
                     {message}
                 </div>
             )}
 
+            {/* LOGIN FORM */}
             {view === 'login' && (
                 <form onSubmit={handleLogin} className="space-y-5 animate-in fade-in">
                     <div>
@@ -131,7 +147,7 @@ export default function CitizenLogin() {
                                 type="email" 
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none text-slate-900 font-medium placeholder:text-slate-400"
+                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none text-slate-900 font-medium placeholder:text-slate-400 transition-all"
                                 placeholder="name@example.com"
                                 required
                             />
@@ -146,23 +162,24 @@ export default function CitizenLogin() {
                                 type="password" 
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none text-slate-900 font-medium placeholder:text-slate-400"
+                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none text-slate-900 font-medium placeholder:text-slate-400 transition-all"
                                 placeholder="••••••••"
                                 required
                             />
                         </div>
                     </div>
 
-                    <button disabled={loading} className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-blue-200">
+                    <button disabled={loading} className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-70">
                         {loading ? <Loader2 className="animate-spin" /> : "Sign In"}
                     </button>
 
                     <div className="text-center mt-4">
-                        <p className="text-slate-600 text-sm font-medium">Don't have an account? <button type="button" onClick={() => setView('signup')} className="text-blue-700 font-bold hover:underline">Create one</button></p>
+                        <p className="text-slate-600 text-sm font-medium">Dont have an account? <button type="button" onClick={() => setView('signup')} className="text-blue-700 font-bold hover:underline">Create one</button></p>
                     </div>
                 </form>
             )}
 
+            {/* SIGNUP FORM */}
             {view === 'signup' && (
                 <form onSubmit={handleSignUp} className="space-y-5 animate-in fade-in slide-in-from-right-4">
                     <div>
@@ -173,7 +190,7 @@ export default function CitizenLogin() {
                                 type="text" 
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 outline-none text-slate-900 font-medium"
+                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 outline-none text-slate-900 font-medium transition-all"
                                 placeholder="Enter your full name"
                                 required
                             />
@@ -189,12 +206,11 @@ export default function CitizenLogin() {
                                     type="text" 
                                     value={pincode}
                                     onChange={(e) => {
-                                        // Only allow numbers and max 6 digits
                                         const val = e.target.value.replace(/\D/g, '').slice(0, 6);
                                         setPincode(val);
                                     }}
-                                    className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 outline-none text-slate-900 font-medium"
-                                    placeholder="e.g. 533003"
+                                    className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 outline-none text-slate-900 font-medium transition-all"
+                                    placeholder="e.g. 533001"
                                     required
                                 />
                              </div>
@@ -209,7 +225,7 @@ export default function CitizenLogin() {
                                 type="email" 
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 outline-none text-slate-900 font-medium"
+                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 outline-none text-slate-900 font-medium transition-all"
                                 placeholder="name@example.com"
                                 required
                             />
@@ -224,14 +240,14 @@ export default function CitizenLogin() {
                                 type="password" 
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 outline-none text-slate-900 font-medium"
+                                className="w-full pl-12 p-3 rounded-xl border border-slate-300 focus:border-blue-600 outline-none text-slate-900 font-medium transition-all"
                                 placeholder="Create a strong password"
                                 required
                             />
                         </div>
                     </div>
 
-                    <button disabled={loading} className="w-full bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-green-200">
+                    <button disabled={loading} className="w-full bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-green-200 disabled:opacity-70">
                         {loading ? <Loader2 className="animate-spin" /> : "Create Account"}
                     </button>
 

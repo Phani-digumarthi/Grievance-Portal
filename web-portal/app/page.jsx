@@ -17,7 +17,7 @@ export default function Home() {
             </div>
             <div className="flex flex-col">
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none">Civic<span className="text-blue-600">Connect</span></h1>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Kakinada Municipal Corp</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Municipal Corp</p>
             </div>
         </div>
       </nav>
@@ -41,7 +41,7 @@ export default function Home() {
         
         <p className="text-lg md:text-xl text-slate-500 mb-12 max-w-2xl font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
           Report civic issues instantly using voice, image, and text. 
-          Help us make <span className="text-slate-900 font-semibold underline decoration-blue-300 decoration-2 underline-offset-2">Kakinada</span> cleaner, safer, and smarter.
+          Help us make <span className="text-slate-900 font-semibold underline decoration-blue-300 decoration-2 underline-offset-2">Environment</span> cleaner, safer, and smarter.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
@@ -88,7 +88,7 @@ export default function Home() {
       </main>
 
       <footer className="relative z-10 py-8 text-center border-t border-slate-200 bg-white/50 backdrop-blur-sm">
-        <p className="text-slate-500 text-sm font-semibold">© 2024 Kakinada Municipal Corporation</p>
+        <p className="text-slate-500 text-sm font-semibold">© Municipal Corporation</p>
         <p className="text-xs text-slate-400 mt-1">Empowering Citizens with Technology</p>
       </footer>
 
